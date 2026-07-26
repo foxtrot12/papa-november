@@ -1,4 +1,4 @@
-# Codename Forge 🛠️
+# Papa November 🛠️
 
 A lightweight, premium, and highly responsive web application built with **Svelte 5** and **TypeScript** to generate unique project names and codenames using dynamic datasets from public APIs.
 
