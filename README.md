@@ -1,47 +1,101 @@
-# Svelte + TS + Vite
+# Codename Forge 🛠️
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+A lightweight, premium, and highly responsive web application built with **Svelte 5** and **TypeScript** to generate unique project names and codenames using dynamic datasets from public APIs.
 
-## Recommended IDE Setup
+---
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## 🌟 Key Features
 
-## Need an official Svelte framework?
+*   **Diverse API Feeds**: Fetch thematic naming data from:
+    *   **Harry Potter API**: Magical spells, students, staff, and character list.
+    *   **Star Trek API (STAPI)**: Spacecraft, characters, conflicts, and series.
+    *   **PokéAPI**: Pokémon names, items, abilities, and moves.
+    *   **Rick & Morty API**: Characters, locations, and episodes.
+*   **Offline-First Resiliency**: Integrates a local, offline-ready fallback dictionary containing hundreds of curated adjectives and tech-themed nouns. If an external API is rate-limited or goes down, name generation seamlessly shifts to the local fallback with visual warning feedback.
+*   **Dynamic Casing Formatting**: Formats project names on-the-fly into:
+    *   `kebab-case` (`project-codename-here`)
+    *   `snake_case` (`project_codename_here`)
+    *   `camelCase` (`projectCodenameHere`)
+    *   `PascalCase` (`ProjectCodenameHere`)
+    *   `Space Separated` (`Project Codename Here`)
+*   **Interactive Controls**:
+    *   Set name length anywhere between **1 to 8 words**.
+    *   Toggle word tokenization: Split full phrases into single words (e.g. `["Jean", "Luc", "Picard"]`) or keep full names/phrases intact as single entities.
+*   **Persistent Favorites & History**:
+    *   Star/favorite names to save them in a local vault.
+    *   Review a recent history list of generated codenames.
+    *   *Both lists automatically convert their casing dynamically whenever the global format changes.*
+    *   Instant copy-to-clipboard by clicking on any generated, starred, or history item.
+*   **API Performance Caching**: Caches fetched API results locally in memory for instant, zero-latency regeneration without redundant network requests.
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+---
 
-## Technical considerations
+## 📐 Architecture: The Adapter Pattern
 
-**Why use this over SvelteKit?**
+To accommodate different API response shapes, the application utilizes the **Adapter Design Pattern**. 
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+A central TypeScript contract enforces a unified interface across all data sources, parsing various nested JSON objects, payloads, and structures into a clean array of strings:
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+```typescript
+export interface Subcategory {
+  id: string;
+  name: string;
+}
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+export interface ApiAdapter {
+  id: string;
+  name: string;
+  subcategories: Subcategory[];
+  fetchItems(subcategoryId: string): Promise<string[]>;
+}
 ```
+
+Adapters are registered inside a central directory:
+*   [fallback.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/fallback.ts) - Offline adjective/noun list
+*   [stapi.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/stapi.ts) - Star Trek POST parser
+*   [pokeapi.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/pokeapi.ts) - PokéAPI paginated GET selector
+*   [rickandmorty.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/rickandmorty.ts) - Rick & Morty REST mapping
+*   [harrypotter.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/harrypotter.ts) - Harry Potter list compiler
+*   [registry.ts](file:///mnt/penguinStorage/Projects/papa-november/src/lib/adapters/registry.ts) - Combines adapters and defaults to fallback registry.
+
+---
+
+## 🛠️ Technology Stack
+
+*   **Svelte 5**: Utilizing new features like Runes (`$state`, `$derived`, `$effect`), standard event attributes (`onclick`), and state scoping (`untrack`).
+*   **Vite 8**: Ultra-fast hot module replacement (HMR) and optimized rollup client bundling.
+*   **TypeScript 6**: Strong typing, compilation checks, and type-safe adapter structures.
+*   **Modern CSS**: HSL variables, dark mode styles (via `@media (prefers-color-scheme: dark)`), standard CSS nesting, sliders, custom scrollbars, loading shimmers, and responsive grids.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+Make sure you have Node.js (version 18+) installed.
+
+### Setup
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/foxtrot12/papa-november.git
+   cd papa-november
+   ```
+2. Install the node packages:
+   ```bash
+   npm install
+   ```
+
+### Scripts
+
+*   **Start Local Development Server**:
+    ```bash
+    npm run dev
+    ```
+*   **Production Client Compilation**:
+    ```bash
+    npm run build
+    ```
+*   **TypeScript & Svelte Code Validation Check**:
+    ```bash
+    npm run check
+    ```
